@@ -1,20 +1,21 @@
-from pip import __version__ as pip_version
+#from pip import __version__ as pip_version
 from setuptools import find_packages
 from setuptools import setup
 from setuptools import find_packages
 
-version = "0.1.0"
+version = "0.1.1"
 
-print("pip version: {0}".format(pip_version))
+#print("pip version: {0}".format(pip_version))
 
 install_requires = [
-    "acme>=0.29.0",
-    "certbot>=1.1.0",
+    "acme==4.1.1",
+    "certbot==4.1.1",
     "setuptools",
     "requests",
     "mock",
     "urllib3",
-    "edgegrid-python>=1.1.1",
+    "edgegrid-python==2.0.2",
+    "zope.interface",
 ]
 
 docs_extras = [
@@ -40,7 +41,7 @@ setup(
     author="Ed Lynes [Akamai Technologies, Inc]",
     author_email="elynes@akamai.com",
     license="Apache License 2.0",
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+    python_requires=">=3.9, <=3.14",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Plugins",
@@ -48,13 +49,13 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Security",
         "Topic :: System :: Installation/Setup",

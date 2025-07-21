@@ -4,4 +4,8 @@
 *.swo
 *.egg-info
 pyrep
-
+.edgerc
+Dockerfile
+structure.txt
+*.ini
+venv/

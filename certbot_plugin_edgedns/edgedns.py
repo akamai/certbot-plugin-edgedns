@@ -8,10 +8,7 @@ from certbot.compat import os
 import sys
 import zope.interface
 
-try:
-    from urllib.parse import urljoin
-except ImportError:
-    from urlparse import urljoin
+from urllib.parse import urljoin
 
 from akamai.edgegrid import EdgeGridAuth, EdgeRc
 
@@ -63,18 +60,18 @@ class Authenticator(dns_common.DNSAuthenticator):
 
     def _validate_credentials(self):
 
-        EDGEGRID_CREDS["edgerc_path"] = edgerc = self.credentials.conf('edgerc_path')
-        EDGEGRID_CREDS["edgerc_section"] = section = self.credentials.conf('edgerc_section')
+        EDGEGRID_CREDS["edgerc_path"] = edgerc = self.credentials.confobj.get('edgerc_path')
+        EDGEGRID_CREDS["edgerc_section"] = section = self.credentials.confobj.get('edgerc_section')
         if edgerc:
             if not section:
                 EDGEGRID_CREDS["edgerc_section"] = "default"
                 print("No edgerc section provided. Using 'default'")
             return
 
-        EDGEGRID_CREDS["client_token"] = client_token = self.credentials.conf('client_token')
-        EDGEGRID_CREDS["client_secret"] = client_secret = self.credentials.conf('client_secret')
-        EDGEGRID_CREDS["access_token"] = access_token = self.credentials.conf('access_token')
-        EDGEGRID_CREDS["host"] = host = self.credentials.conf('host')
+        EDGEGRID_CREDS["client_token"] = client_token = self.credentials.confobj.get('client_token')
+        EDGEGRID_CREDS["client_secret"] = client_secret = self.credentials.confobj.get('client_secret')
+        EDGEGRID_CREDS["access_token"] = access_token = self.credentials.confobj.get('access_token')
+        EDGEGRID_CREDS["host"] = host = self.credentials.confobj.get('host')
         errmsg = ''
         missing = 0
         if not client_token:	
@@ -91,12 +88,12 @@ class Authenticator(dns_common.DNSAuthenticator):
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += ', edgedns_access_token'
+            errmsg += 'edgedns_access_token'
         if not host:
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += ', edgedns_host'
+            errmsg += 'edgedns_host'
         if not edgerc and missing == 4:
             raise errors.PluginError('{0}:Either an edgerc_path or individual edgegrid crendentials are required '
                                          ' when using the EdgeDNS API (see {1})'
@@ -169,10 +166,16 @@ class _EdgeDNSClient(object):
                                               client_secret = EDGEGRID_CREDS["client_secret"],
                                               access_token = EDGEGRID_CREDS["access_token"])
         # Error checking the .edgerc file
-        if pathhost.find('://') > 0:
+        '''if pathhost.find('://') > 0:
             raise errors.PluginError('{0}: You have specified an invalid host entry '
                                          'Please remove the http(s):// at the beginning.'
-            )
+            )'''
+        if not pathhost:
+            raise errors.PluginError("EdgeDNS: Missing required 'host' value.")
+
+        if '://' in pathhost:
+            raise errors.PluginError("EdgeDNS: Invalid 'host' value. Remove the http(s):// prefix.")
+
         root_path = self.BASEURL.format(pathhost)
         self.EDGEDNSROOTURL = urljoin(root_path, "/config-dns/v2/") 
         self.EDGEDNSZONESURL = self.EDGEDNSROOTURL + "zones/"
@@ -226,7 +229,7 @@ class _EdgeDNSClient(object):
         logger.debug("Get Recordset response: {0}".format(result.text))
         if result.status_code == 403:
             self.recordset_semaphore.release()
-            raise errors.PluginError('EdgeDNS: Provided credentials do not have the correct permission for this GET API call: ({0})'.format(result.message)
+            raise errors.PluginError('EdgeDNS: Provided credentials do not have the correct permission for this GET API call: ({0})'.format(result.text)
             )
         elif result.status_code == 200:
             try:
@@ -360,7 +363,7 @@ class _EdgeDNSClient(object):
                     continue
                 else:
                     raise errors.PluginError(
-                    "EdgeDNS: API zone retrieval invocation resulted in a error: {0} {1}".format(result.status_code, result.message)
+                    "EdgeDNS: API zone retrieval invocation resulted in a error: {0} {1}".format(result.status_code, result.text)
                 )
             except:
                 logger.error(" ZONE RETRIEVAL Error: {0}".format(sys.exc_info()[0]))
