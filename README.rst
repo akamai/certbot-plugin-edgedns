@@ -36,18 +36,15 @@ To start using DNS authentication for edge DNS, pass the following arguments on
 certbot's command line:
 
 ============================================================= =================================================
-``--authenticator [certbot-plugin-edgedns:]edgedns``          select the authenticator plugin (Required)
+``--authenticator edgedns``         select the authenticator plugin (Required)
 
-``--[certbot-plugin-edgedns:]edgedns-credentials``            Akamai Openedgegrid Auth credentials
-                                                              INI file. (Required)
+``--edgedns-credentials``           Akamai Openedgegrid Auth credentials
+                                    INI file. (Required)
 
-``--[certbot-plugin-edgedns:]edgedns-propagation-seconds``    | waiting time for DNS to propagate before asking
-                                                              | the ACME server to verify the DNS record.
-                                                              | (Default: 180, Recommended: >= 600)
+``--edgedns-propagation-seconds``   | waiting time for DNS to propagate before asking
+                                    | the ACME server to verify the DNS record.
+                                    | (Default: 180, Recommended: >= 600)
 ============================================================= =================================================
-
-(Note that the verbose and seemingly redundant ``certbot-dns-edgedns:`` prefix
-is currently imposed for named arguments by certbot versions prior to 1.7.0 for external plugins.)
 
 
 Credentials
@@ -57,24 +54,21 @@ An example ``credentials.ini`` file using Open Edgegrid keys directly:
 
 .. code-block:: ini
 
-   [certbot_plugin_edgedns:]edgedns_client_token = akab-mnbvcxzlkjhgfdsapoiuytrewq1234567
-   [certbot_plugin_edgedns:]edgedns_access_token = akab-1234567890qwerty-asdfghjklzxcvtnu
-   [certbot_plugin_edgedns:]edgedns_client_secret = abcdefghijklmnopqrstuvwxyz1234567890ABCDEFG= 
-   [certbot_plugin_edgedns:]edgedns_host = akab-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.luna.akamaiapis.net
+   client_token = akab-mnbvcxzlkjhgfdsapoiuytrewq1234567
+   access_token = akab-1234567890qwerty-asdfghjklzxcvtnu
+   client_secret = abcdefghijklmnopqrstuvwxyz1234567890ABCDEFG= 
+   host = akab-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.luna.akamaiapis.net
 
 An example ``credentials.ini`` file using Open Edgegrid .edgerc file:
 
 .. code-block:: ini
 
-   [certbot_plugin_edgedns:]edgedns_edgerc_path = /home/testuser/.edgerc
-   [certbot_plugin_edgedns:]edgedns_edgerc_section = default
+   edgerc_path = /home/testuser/.edgerc
+   edgerc_section = default
 
-
-(Note that the verbose and seemingly redundant ``certbot_dns_edgedns:`` prefix
-is currently imposed for credential key arguments by certbot versions prior to 1.7.0 for external plugins.)
 
 The path to this file can be provided interactively or using the
-``--[certbot-dns-edgedns:]edgedns-credentials`` command-line argument. Certbot
+``--edgedns-credentials`` command-line argument. Certbot
 records the path to this file for use during renewal, but does not store the
 file's contents.
 
@@ -102,9 +96,9 @@ To acquire a single certificate for both ``example.com`` and
 
    certbot certonly \
      --csr ./example.com.pem \
-     --authenticator certbot-plugin-edgedns:edgedns \
-     --certbot-plugin-edgedns:edgedns-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
-     --certbot-plugin-edgedns:edgedns-propagation-seconds 900 \
+     --authenticator edgedns \
+     --edgedns-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
+     --edgedns-propagation-seconds 900 \
      --server https://acme-v02.api.letsencrypt.org/directory \
      --agree-tos \
      --rsa-key-size 4096 \
@@ -134,9 +128,9 @@ Once that's finished, the application can be run as follows::
        -v /etc/letsencrypt:/etc/letsencrypt \
        --cap-drop=all \
        certbot/edgedns certonly \
-       --authenticator certbot-plugin-edgedns:edgedns \
-       --certbot-plugin-edgedns:edgedns-propagation-seconds 900 \
-       --certbot-plugin-edgedns:edgedns-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
+       --authenticator edgedns \
+       --edgedns-propagation-seconds 900 \
+       --edgedns-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
        --no-self-upgrade \
        --keep-until-expiring --non-interactive --expand \
        --server https://acme-v02.api.letsencrypt.org/directory \

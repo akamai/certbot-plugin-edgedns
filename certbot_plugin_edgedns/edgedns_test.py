@@ -76,7 +76,7 @@ class AuthenticatorTest(
 
         self.auth_edgerc = Authenticator(self.config_edgerc, "edgedns")
 
-        # ✅ UPDATED: mock client setup
+        # UPDATED: mock client setup
         self.mock_client = mock.MagicMock()
         self.auth._get_edgedns_client = mock.MagicMock(return_value=self.mock_client)
 
@@ -86,7 +86,7 @@ class AuthenticatorTest(
         self.notify_patcher = mock.patch('certbot.display.util.notify', lambda *args, **kwargs: None)
         self.notify_patcher.start()
 
-        # ✅ UPDATED/ADDED: Complete achall mock
+        # UPDATED/ADDED: Complete achall mock
         self.achall = mock.MagicMock()
         self.achall.domain = DOMAIN
         self.achall.account_key = mock.MagicMock()

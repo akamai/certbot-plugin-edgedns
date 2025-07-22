@@ -3,7 +3,7 @@ from setuptools import find_packages
 from setuptools import setup
 from setuptools import find_packages
 
-version = "0.1.1"
+version = "0.2.0"
 
 #print("pip version: {0}".format(pip_version))
 
