@@ -23,6 +23,7 @@ To set up your Akamai OPEN CREDENTIALS, and .edgerc file, see the `authorization
 
 Installation
 ------------
+Note: Python 3.9.2 or higher is required due to dependency requirements. 
 
 ::
 
