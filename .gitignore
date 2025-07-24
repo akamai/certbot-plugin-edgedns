@@ -14,3 +14,4 @@ venv/
 .env.*
 .DS_Store
 certbot_plugin_edgedns.egg-info/
+/build

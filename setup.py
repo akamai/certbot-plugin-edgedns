@@ -1,7 +1,6 @@
 #from pip import __version__ as pip_version
 from setuptools import find_packages
 from setuptools import setup
-from setuptools import find_packages
 
 version = "0.2.0"
 
@@ -41,7 +40,7 @@ setup(
     author="Ed Lynes [Akamai Technologies, Inc]",
     author_email="elynes@akamai.com",
     license="Apache License 2.0",
-    python_requires=">=3.9, <=3.14",
+    python_requires=">=3.9.2, <=3.14",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Plugins",
@@ -49,8 +48,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.9.2",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

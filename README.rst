@@ -59,6 +59,7 @@ An example ``credentials.ini`` file using Open Edgegrid keys directly:
    access_token = akab-1234567890qwerty-asdfghjklzxcvtnu
    client_secret = abcdefghijklmnopqrstuvwxyz1234567890ABCDEFG= 
    host = akab-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.luna.akamaiapis.net
+   account_key = 1-2ABCD3 (OPTIONAL)
 
 An example ``credentials.ini`` file using Open Edgegrid .edgerc file:
 

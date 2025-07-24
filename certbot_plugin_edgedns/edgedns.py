@@ -24,7 +24,8 @@ EDGEGRID_CREDS = {"client_token": "",
                   "client_secret": "",
                   "host": "",
                   "edgerc_path": "",
-                  "edgerc_section": ""
+                  "edgerc_section": "",
+                  "account_key": ""
                  }
 RECORD_TTL = 600
 DEFAULT_PROPAGATION_DELAY = 180
@@ -72,6 +73,8 @@ class Authenticator(dns_common.DNSAuthenticator):
         EDGEGRID_CREDS["client_secret"] = client_secret = self.credentials.confobj.get('client_secret')
         EDGEGRID_CREDS["access_token"] = access_token = self.credentials.confobj.get('access_token')
         EDGEGRID_CREDS["host"] = host = self.credentials.confobj.get('host')
+        EDGEGRID_CREDS["account_key"] = self.credentials.confobj.get('account_key')
+
         errmsg = ''
         missing = 0
         if not client_token:	
@@ -149,27 +152,38 @@ class _EdgeDNSClient(object):
     TXT_RECORDSET_TEMPLATE = {"name": "www.example.com", "type": "TXT", "ttl": RECORD_TTL, "rdata": []}
 
     recordset_semaphore = threading.Semaphore() 
-    session = None					# 
+    session = None					
 
     def __init__(self, edgedns_creds):
+        self.http_parameters = {}
+        #self.session = None
         logger.debug("creating _EdgeDNSClient")
         pathhost = ""
         if EDGEGRID_CREDS["edgerc_path"]:
-            section = 'default'
-            if EDGEGRID_CREDS["edgerc_section"]:
-                section = EDGEGRID_CREDS["edgerc_section"]
-            pathhost = EdgeRc(EDGEGRID_CREDS["edgerc_path"]).get(section, 'host')
+            section = EDGEGRID_CREDS.get("edgerc_section", "default")
+            edgerc = EdgeRc(EDGEGRID_CREDS["edgerc_path"])
+            pathhost = edgerc.get(section, 'host')
             self.edgegrid_auth = EdgeGridAuth.from_edgerc(EDGEGRID_CREDS["edgerc_path"], section)
+
+            if edgerc.has_option(section, 'account_key'):
+                account_key = edgerc.get(section, 'account_key')
+                self.http_parameters['accountSwitchKey'] = account_key
+                print(f"[INFO] account_key from .edgerc: {account_key}")
         else:
             pathhost = EDGEGRID_CREDS["host"]
             self.edgegrid_auth = EdgeGridAuth(client_token = EDGEGRID_CREDS["client_token"],
                                               client_secret = EDGEGRID_CREDS["client_secret"],
                                               access_token = EDGEGRID_CREDS["access_token"])
+            ## Adding parameters
+            #self.http_parameters = {}
+            account_key = EDGEGRID_CREDS.get('account_key')
+            if account_key:
+                self.http_parameters['accountSwitchKey'] = account_key
+                print(f"[INFO] account_key from credentials: {account_key}")
+             #self.http_parameters = {'accountSwitchKey': 'B-V-4XV61MM:1-8BYUX'}
+        
+
         # Error checking the .edgerc file
-        '''if pathhost.find('://') > 0:
-            raise errors.PluginError('{0}: You have specified an invalid host entry '
-                                         'Please remove the http(s):// at the beginning.'
-            )'''
         if not pathhost:
             raise errors.PluginError("EdgeDNS: Missing required 'host' value.")
 
@@ -217,6 +231,8 @@ class _EdgeDNSClient(object):
             raise errors.PluginError('Managed zone not found in domain {0}'.format(domain)
             )
         self.session.auth = self.edgegrid_auth
+        self.session.params = self.http_parameters
+
         self.session.headers.update({'Content-Type': 'application/json'})
         getpathurl = self.EDGEDNSZONESURL + '{0}/names/{1}/types/TXT'.format(zone, record_name)
         logger.debug("EDGEDNS: get_text_record. GET url: {0}".format(getpathurl)) 
@@ -279,6 +295,7 @@ class _EdgeDNSClient(object):
             self.session = requests.Session()
         with self.session as session:
             session.auth = self.edgegrid_auth
+            self.session.params = self.http_parameters
             try:
                 self._process_add_record(session, zone, txt_recordset, record_content)
             except errors.PluginError as pe:
@@ -324,6 +341,7 @@ class _EdgeDNSClient(object):
             self.session = requests.Session()
         with self.session as session:
             session.auth = self.edgegrid_auth
+            self.session.params = self.http_parameters
             try:
                 self._process_del_record(session, zone, txt_recordset, record_content)
             except errors.PluginError as pe:
@@ -350,6 +368,7 @@ class _EdgeDNSClient(object):
         zone_dns_name_guesses = dns_common.base_domain_name_guesses(domain)
         
         self.session.auth = self.edgegrid_auth
+        self.session.params = self.http_parameters
 
         for zone_name in zone_dns_name_guesses:
             # get the zone id
@@ -365,12 +384,11 @@ class _EdgeDNSClient(object):
                     raise errors.PluginError(
                     "EdgeDNS: API zone retrieval invocation resulted in a error: {0} {1}".format(result.status_code, result.text)
                 )
-            except:
-                logger.error(" ZONE RETRIEVAL Error: {0}".format(sys.exc_info()[0]))
-                raise errors.PluginError(
-                    "EdgeDNS: API invocation resulted in a session error: {0}".format(sys.exc_info()[0])
-                )
+            except Exception as e:
+                logger.error("ZONE RETRIEVAL Error: %s", str(e))
+                raise errors.PluginError(f"EdgeDNS: API invocation resulted in a session error: {e}")
 
+            
         logger.debug("EDGEDNS: _find_managed_zone NOT found.")
 
         return None
