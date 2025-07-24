@@ -3,8 +3,7 @@
 ## Version 0.2.0 (July, 2025)
 
 ### Changes made
-- Removed support for Python 2 
-  `edgegrid-python` v2.0.2 no longer supports Python 2, so compatibility has been dropped.
+- Removed support for Python 2 as `edgegrid-python` v2.0.2 no longer supports Python 2, so compatibility has been dropped.
 - Python 3.9.2+ required
 - Added support for account_key
   
