@@ -15,6 +15,7 @@ install_requires = [
     "urllib3",
     "edgegrid-python==2.0.2",
     "zope.interface",
+    "requests_mock",
 ]
 
 docs_extras = [
