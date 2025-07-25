@@ -6,7 +6,7 @@
 - Removed support for Python 2 as `edgegrid-python` v2.0.2 no longer supports Python 2, so compatibility has been dropped.
 - Python 3.9.2+ required due to dependancy requirements
 - Added support for account_key
-- added pyproject.toml file 
+- Added pyproject.toml file 
   
 - Updated dependencies:
   - `acme` and `certbot` upgraded to v4.1.1
