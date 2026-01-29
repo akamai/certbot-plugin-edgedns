@@ -23,7 +23,7 @@ To set up your Akamai OPEN CREDENTIALS, and .edgerc file, see the `authorization
 
 Installation
 ------------
-Note: Python 3.9.2 or higher is required due to dependency requirements. 
+Note: Python 3.10 or higher is required due to dependency requirements. 
 
 ::
 
@@ -133,9 +133,9 @@ Once that's finished, the application can be run as follows::
        --authenticator edgedns \
        --edgedns-propagation-seconds 900 \
        --edgedns-credentials /etc/letsencrypt/.secrets/domain.tld.ini \
-       --no-self-upgrade \
        --keep-until-expiring --non-interactive --expand \
        --server https://acme-v02.api.letsencrypt.org/directory \
+       --agree-tos \
        -d example.com -d '*.example.com'
 
 It is strongly suggested that the folder be secured by taking the following steps:

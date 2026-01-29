@@ -81,22 +81,22 @@ class Authenticator(dns_common.DNSAuthenticator):
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += 'edgedns_client_token'
+            errmsg += 'client_token'
         if not client_secret:
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += 'edgedns_client_secret'
+            errmsg += 'client_secret'
         if not access_token:
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += 'edgedns_access_token'
+            errmsg += 'access_token'
         if not host:
             missing += 1
             if errmsg != '':
                 errmsg += ', '
-            errmsg += 'edgedns_host'
+            errmsg += 'host'
         if not edgerc and missing == 4:
             raise errors.PluginError('{0}:Either an edgerc_path or individual edgegrid crendentials are required '
                                          ' when using the EdgeDNS API (see {1})'

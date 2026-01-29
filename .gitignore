@@ -17,3 +17,4 @@ certbot_plugin_edgedns.egg-info/
 /build
 /myenv
 /dist
+__pycache__/

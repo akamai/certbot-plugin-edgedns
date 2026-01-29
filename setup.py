@@ -7,13 +7,13 @@ version = "0.2.0"
 #print("pip version: {0}".format(pip_version))
 
 install_requires = [
-    "acme==4.1.1",
-    "certbot==4.1.1",
+    "acme==5.2.2",
+    "certbot==5.2.2",
     "setuptools",
     "requests",
     "mock",
     "urllib3",
-    "edgegrid-python==2.0.2",
+    "edgegrid-python==2.0.5",
     "zope.interface",
     "requests_mock",
 ]
@@ -41,7 +41,7 @@ setup(
     author="Ed Lynes [Akamai Technologies, Inc]",
     author_email="elynes@akamai.com",
     license="Apache License 2.0",
-    python_requires=">=3.9.2, <=3.14",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Plugins",
@@ -49,7 +49,6 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.9.2",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
