@@ -2,11 +2,11 @@
 
 import unittest
 import copy
-import mock
 import json
 import requests_mock
 import requests
 
+from unittest import mock
 from certbot import errors
 from certbot.compat import os
 from certbot.errors import PluginError
@@ -32,10 +32,10 @@ class AuthenticatorTest(
         creds_ini_path = os.path.join(self.tempdir, "file_creds.ini")
         dns_test_common.write(
             {
-                "edgedns_client_token": FAKE_CLIENT_TOKEN,
-                "edgedns_client_secret": FAKE_CLIENT_SECRET,
-                "edgedns_access_token": FAKE_ACCESS_TOKEN,
-                "edgedns_host": FAKE_HOST,
+                "client_token": FAKE_CLIENT_TOKEN,
+                "client_secret": FAKE_CLIENT_SECRET,
+                "access_token": FAKE_ACCESS_TOKEN,
+                "host": FAKE_HOST,
             },
             creds_ini_path,
         )
@@ -55,13 +55,13 @@ class AuthenticatorTest(
         edgerc_ini_path = os.path.join(self.tempdir, "file_edgerc.ini")
         dns_test_common.write(
             {
-                "edgedns_edgerc_path": dot_edgerc_path,
-                "edgedns_edgerc_section": "default",
+                "edgerc_path": dot_edgerc_path,
+                "edgerc_section": "default",
             },
             edgerc_ini_path,
         )
 
-        super(AuthenticatorTest, self).setUp()
+        #super(AuthenticatorTest, self).setUp()
         # creds ini path 
         self.config = mock.MagicMock(
             edgedns_credentials=creds_ini_path, _edgedns_propagation_seconds=0
@@ -76,15 +76,28 @@ class AuthenticatorTest(
 
         self.auth_edgerc = Authenticator(self.config_edgerc, "edgedns")
 
-        # ini creds
+        # UPDATED: mock client setup
         self.mock_client = mock.MagicMock()
-        # _get_edgedns_client | pylint: disable=protected-access
         self.auth._get_edgedns_client = mock.MagicMock(return_value=self.mock_client)
 
-        # edgerc
         self.mock_client_edgerc = mock.MagicMock()
-        # _get_edgedns_client | pylint: disable=protected-access
         self.auth_edgerc._get_edgedns_client = mock.MagicMock(return_value=self.mock_client_edgerc)
+
+        self.notify_patcher = mock.patch('certbot.display.util.notify', lambda *args, **kwargs: None)
+        self.notify_patcher.start()
+
+        # UPDATED/ADDED: Complete achall mock
+        self.achall = mock.MagicMock()
+        self.achall.domain = DOMAIN
+        self.achall.account_key = mock.MagicMock()
+        self.achall.validation = mock.MagicMock(return_value="fake-validation")
+        self.achall.validation_domain_name = mock.MagicMock(
+            return_value="_acme-challenge." + DOMAIN
+        )
+
+    def tearDown(self):
+        self.notify_patcher.stop()
+        super().tearDown()
 
     def test_perform(self):
 
@@ -93,7 +106,7 @@ class AuthenticatorTest(
 
         expected = [
             mock.call.add_txt_record(
-                DOMAIN, "_acme-challenge." + DOMAIN, mock.ANY
+                DOMAIN, "_acme-challenge." + DOMAIN, "fake-validation"
             )
         ]
         self.assertEqual(expected, self.mock_client.mock_calls)
@@ -103,7 +116,7 @@ class AuthenticatorTest(
 
         expected = [
             mock.call.add_txt_record(
-                DOMAIN, "_acme-challenge." + DOMAIN, mock.ANY
+                DOMAIN, "_acme-challenge." + DOMAIN, "fake-validation"
             )
         ]
         self.assertEqual(expected, self.mock_client_edgerc.mock_calls)
@@ -117,7 +130,7 @@ class AuthenticatorTest(
 
         expected = [
             mock.call.del_txt_record(
-                DOMAIN, "_acme-challenge." + DOMAIN, mock.ANY
+                DOMAIN, "_acme-challenge." + DOMAIN, "fake-validation"
             )
         ]
         self.assertEqual(expected, self.mock_client.mock_calls)
@@ -128,7 +141,7 @@ class AuthenticatorTest(
 
         expected = [
             mock.call.del_txt_record(
-                DOMAIN, "_acme-challenge." + DOMAIN, mock.ANY,
+                DOMAIN, "_acme-challenge." + DOMAIN, "fake-validation"
             )
         ]
         self.assertEqual(expected, self.mock_client_edgerc.mock_calls)
@@ -177,6 +190,12 @@ class EdgeDNSClientTest(unittest.TestCase):
                           "host": FAKE_HOST}
 
         self.client = _EdgeDNSClient(EDGEGRID_CREDS)
+        self.notify_patcher = mock.patch('certbot.display.util.notify', lambda *args, **kwargs: None)
+        self.notify_patcher.start()
+
+    def tearDown(self):
+        self.notify_patcher.stop()
+        super().tearDown()
 
     def _register_response(
         self, req_op, req_uri, url_params=None, response=None, message=None, additional_matcher=None, **kwargs

@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to certbot-plugin-edgedns' documentation!
-===============================================
+=================================================
 
 .. toctree::
    :maxdepth: 2
