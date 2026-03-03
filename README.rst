@@ -23,7 +23,7 @@ To set up your Akamai OPEN CREDENTIALS, and .edgerc file, see the `authorization
 
 Installation
 ------------
-Note: Python 3.10 or higher is required due to dependency requirements. 
+Note: Python 3.12 or higher is required due to dependency requirements. 
 
 ::
 
@@ -36,16 +36,17 @@ Named Arguments
 To start using DNS authentication for edge DNS, pass the following arguments on
 certbot's command line:
 
-============================================================= =================================================
-``--authenticator edgedns``         select the authenticator plugin (Required)
+==================================  =============================================================
+Argument                            Description
+==================================  =============================================================
+``--authenticator edgedns``         Select the authenticator plugin (Required)
 
-``--edgedns-credentials``           Akamai Openedgegrid Auth credentials
-                                    INI file. (Required)
+``--edgedns-credentials``           Akamai EdgeDNS Auth credentials INI file. (Required)
 
-``--edgedns-propagation-seconds``   | waiting time for DNS to propagate before asking
-                                    | the ACME server to verify the DNS record.
-                                    | (Default: 180, Recommended: >= 600)
-============================================================= =================================================
+``--edgedns-propagation-seconds``   Waiting time for DNS to propagate before asking
+                                    the ACME server to verify the DNS record.
+                                    (Default: 180, Recommended: >= 600)
+==================================  =============================================================
 
 
 Credentials

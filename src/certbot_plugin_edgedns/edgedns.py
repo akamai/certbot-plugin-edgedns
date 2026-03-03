@@ -42,13 +42,13 @@ class Authenticator(dns_common.DNSAuthenticator):
     section = "default" 
 
     def __init__(self, *args, **kwargs):
-        super(Authenticator, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.credentials = None
         self.edge_client = None
 
     @classmethod
     def add_parser_arguments(cls, add):  # pylint: disable=arguments-differ
-        super(Authenticator, cls).add_parser_arguments(
+        super().add_parser_arguments(
             add, default_propagation_seconds=DEFAULT_PROPAGATION_DELAY
         )
         add("credentials", help="EdgeDNS credentials INI file.")
@@ -98,17 +98,19 @@ class Authenticator(dns_common.DNSAuthenticator):
                 errmsg += ', '
             errmsg += 'host'
         if not edgerc and missing == 4:
-            raise errors.PluginError('{0}:Either an edgerc_path or individual edgegrid crendentials are required '
-                                         ' when using the EdgeDNS API (see {1})'
-                                         .format(self.credentials.confobj.filename, EDGEGRID_URL))
+            raise errors.PluginError(
+                f"{self.credentials.confobj.filename}: Either an edgerc_path or individual edgegrid credentials are required "
+                f"when using the EdgeDNS API (see {EDGEGRID_URL})"
+            )
         if errmsg != '':
             if missing == 1:
                 errmsg += ' is '
             else:
                 errmsg += ' are '
             errmsg += 'required when specifying individual edgegrid credentials ' 
-            raise errors.PluginError('{0}: ' + errmsg + ' for using the EdgeDNS API (see {1})'
-                                     .format(self.credentials.confobj.filename, EDGEGRID_URL))
+            raise errors.PluginError(
+                f"{self.credentials.confobj.filename}: {errmsg} for using the EdgeDNS API (see {EDGEGRID_URL})"
+            )
 
     def _setup_credentials(self):
 
@@ -124,15 +126,11 @@ class Authenticator(dns_common.DNSAuthenticator):
             raise
 
     def _perform(self, domain, validation_name, validation):
-
-        logger.debug("EDGEDNS: _perform. domain: {0}, name: {1}, content: {2}".format(domain, validation_name, validation))
-
+        logger.debug(f"EDGEDNS: _perform. domain: {domain}, name: {validation_name}, content: {validation}")
         self._get_edgedns_client().add_txt_record(domain, validation_name, validation)
 
     def _cleanup(self, domain, validation_name, validation):
-
-        logger.debug("EDGEDNS: _cleanup. domain: {0}, name: {1}, content: {2}".format(domain, validation_name, validation))
-
+        logger.debug(f"EDGEDNS: _cleanup. domain: {domain}, name: {validation_name}, content: {validation}")
         self._get_edgedns_client().del_txt_record(domain, validation_name, validation)
 
     def _get_edgedns_client(self):
@@ -143,7 +141,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 raise e
         return self.edge_client
 
-class _EdgeDNSClient(object):
+class _EdgeDNSClient:
     """
     Encapsulates all communication with the EdgeDNS Remote REST API.
     """
@@ -180,7 +178,6 @@ class _EdgeDNSClient(object):
             if account_key:
                 self.http_parameters['accountSwitchKey'] = account_key
                 print(f"[INFO] account_key from credentials: {account_key}")
-             #self.http_parameters = {'accountSwitchKey': 'B-V-4XV61MM:1-8BYUX'}
         
 
         # Error checking the .edgerc file
@@ -217,9 +214,9 @@ class _EdgeDNSClient(object):
         :raises certbot.errors.PluginError: if an error occurs communicating with the EdgeDNS API
         """
 
-        logger.debug("EDGEDNS: get_text_record. domain: {0}, name: {1}".format(domain,  record_name))
+        logger.debug(f"EDGEDNS: get_text_record. domain: {domain}, name: {record_name}")
         self.recordset_semaphore.acquire() 
-        if self.session == None:
+        if self.session is None:
             self.session = requests.Session()
         try: 
             zone = self._find_managed_zone(domain)
@@ -228,24 +225,26 @@ class _EdgeDNSClient(object):
             raise 
         if zone is None:
             self.recordset_semaphore.release()
-            raise errors.PluginError('Managed zone not found in domain {0}'.format(domain)
-            )
+            raise errors.PluginError(f"Managed zone not found in domain {domain}")
         self.session.auth = self.edgegrid_auth
         self.session.params = self.http_parameters
 
         self.session.headers.update({'Content-Type': 'application/json'})
         getpathurl = self.EDGEDNSZONESURL + '{0}/names/{1}/types/TXT'.format(zone, record_name)
-        logger.debug("EDGEDNS: get_text_record. GET url: {0}".format(getpathurl)) 
+        logger.debug(f"EDGEDNS: get_text_record. GET url: {getpathurl}")
         try:
             result = self.session.get(getpathurl)
         except:
             self.recordset_semaphore.release()
-            raise errors.PluginError("EdgeDNS: API Get recordset invocation resulted in a session error: {0}".format(sys.exc_info()[0]))
+            raise errors.PluginError(
+                f"EdgeDNS: API Get recordset invocation resulted in a session error: {sys.exc_info()[0]}"
+            )
 
-        logger.debug("Get Recordset response: {0}".format(result.text))
+        logger.debug(f"Get Recordset response: {result.text}")
         if result.status_code == 403:
             self.recordset_semaphore.release()
-            raise errors.PluginError('EdgeDNS: Provided credentials do not have the correct permission for this GET API call: ({0})'.format(result.text)
+            raise errors.PluginError(
+                f"EdgeDNS: Provided credentials do not have the correct permission for this GET API call: ({result.text})"
             )
         elif result.status_code == 200:
             try:
@@ -254,7 +253,7 @@ class _EdgeDNSClient(object):
             except:
                 self.recordset_semaphore.release()
                 raise errors.PluginError(
-                    "EdgeDNS: Response body conversion to JSON failed with an error: {0}".format(sys.exc_info()[0])
+                    f"EdgeDNS: Response body conversion to JSON failed with an error: {sys.exc_info()[0]}"
                 )
         elif result.status_code == 404:
             logger.debug("Get record not found. Constructing MT record")
@@ -268,7 +267,7 @@ class _EdgeDNSClient(object):
 
         self.recordset_semaphore.release()
         raise errors.PluginError(
-            "EdgeDNS: API Get response with an unknown error: {0} {1}".format(result.status_code, result.reason)
+            f"EdgeDNS: API Get response with an unknown error: {result.status_code} {result.reason}"
         )
 
     def add_txt_record(self, domain, record_name, record_content, record_ttl=RECORD_TTL):
@@ -282,16 +281,16 @@ class _EdgeDNSClient(object):
         :raises certbot.errors.PluginError: if an error occurs communicating with the EdgeDNS API
         """
 
-        logger.debug("EDGEDNS: add_text_record. domain: {0}, name: {1}, content: {2}".format(domain, record_name, record_content))
+        logger.debug(f"EDGEDNS: add_text_record. domain: {domain}, name: {record_name}, content: {record_content}")
         try:
             txt_recordset, zone = self.get_text_record(domain, record_name, record_ttl)
         except errors.PluginError as pe:
             raise pe
         except:
-           raise errors.PluginError("{0}".format(sys.exc_info()[0]))
+           raise errors.PluginError(f"{sys.exc_info()[0]}")
 
         self.recordset_semaphore.acquire()
-        if self.session == None:
+        if self.session is None:
             self.session = requests.Session()
         with self.session as session:
             session.auth = self.edgegrid_auth
@@ -304,7 +303,7 @@ class _EdgeDNSClient(object):
             except:
                 self.recordset_semaphore.release()
                 raise errors.PluginError(
-                    "EdgeDNS: API invocation resulted in a session error: {0}".format(sys.exc_info()[0])
+                    f"EdgeDNS: API invocation resulted in a session error: {sys.exc_info()[0]}"
                 )
 
         self.recordset_semaphore.release()
@@ -324,20 +323,20 @@ class _EdgeDNSClient(object):
         :raises certbot.errors.PluginError: if managed zone doesn't exist
         """
 
-        logger.debug("EDGEDNS: del_text_record. domain: {0}, name: {1}, content: {2}".format(domain, record_name, record_content))
+        logger.debug(f"EDGEDNS: del_text_record. domain: {domain}, name: {record_name}, content: {record_content}")
         try:
             txt_recordset, zone = self.get_text_record(domain, record_name)
         except errors.PluginError as e:
             raise e
         except:
-           raise errors.PluginError("{0}".format(sys.exc_info()[0]))
+           raise errors.PluginError(f"{sys.exc_info()[0]}")
 
         if len(txt_recordset["rdata"]) == 0:
             # no record found
             return
 
         self.recordset_semaphore.acquire()
-        if self.session == None:
+        if self.session is None:
             self.session = requests.Session()
         with self.session as session:
             session.auth = self.edgegrid_auth
@@ -346,10 +345,10 @@ class _EdgeDNSClient(object):
                 self._process_del_record(session, zone, txt_recordset, record_content)
             except errors.PluginError as pe:
                 self.recordset_semaphore.release()
-                logger.error("EdgeDNS: Record delete errored: {0}. Ignoring".format(pe))
+                logger.error(f"EdgeDNS: Record delete errored: {pe}. Ignoring")
             except:
                 self.recordset_semaphore.release()
-                logger.error("EdgeDNS: API invocation resulted in a session error: {0}. Ignored".format(sys.exc_info()[0]))
+                logger.error(f"EdgeDNS: API invocation resulted in a session error: {sys.exc_info()[0]}. Ignored")
 
         self.recordset_semaphore.release()
         return
@@ -363,7 +362,7 @@ class _EdgeDNSClient(object):
         :rtype: string
         :returns: The managed zone name, if found.
         """
-        logger.debug("EDGEDNS: _find_managed_zone. domain: {0}".format(domain))
+        logger.debug(f"EDGEDNS: _find_managed_zone. domain: {domain}")
 
         zone_dns_name_guesses = dns_common.base_domain_name_guesses(domain)
         
@@ -373,16 +372,16 @@ class _EdgeDNSClient(object):
         for zone_name in zone_dns_name_guesses:
             # get the zone id
             try:
-                logger.debug("EdgeDNS: looking for zone: {0}".format(zone_name))
+                logger.debug(f"EdgeDNS: looking for zone: {zone_name}")
                 result = self.session.get(self.EDGEDNSZONESURL + zone_name)
                 if result.status_code == 200:
-                    logger.debug("EDGEDNS: _find_managed_zone found. zone: {0}".format(zone_name))
+                    logger.debug(f"EDGEDNS: _find_managed_zone found. zone: {zone_name}")
                     return zone_name
                 elif result.status_code == 404:
                     continue
                 else:
                     raise errors.PluginError(
-                    "EdgeDNS: API zone retrieval invocation resulted in a error: {0} {1}".format(result.status_code, result.text)
+                    f"EdgeDNS: API zone retrieval invocation resulted in a error: {result.status_code} {result.text}"
                 )
             except Exception as e:
                 logger.error("ZONE RETRIEVAL Error: %s", str(e))
@@ -400,7 +399,7 @@ class _EdgeDNSClient(object):
             # create new
             txt_recordset["rdata"].append(record_content)
             postpathsegment = self.EDGEDNSZONESURL + '{0}/names/{1}/types/TXT'.format(zone, txt_recordset["name"])
-            logger.debug('EdgeDNS: Recordset Add POST URL: {0}'.format(postpathsegment))
+            logger.debug(f"EdgeDNS: Recordset Add POST URL: {postpathsegment}")
 
             try:
                 recordset_json = json.dumps(txt_recordset)
@@ -408,7 +407,7 @@ class _EdgeDNSClient(object):
             except:
                 e = sys.exc_info()[0]
                 raise errors.PluginError(
-                    "EdgeDNS: Add record API invocation resulted in a http request session error: {0}".format(e)
+                    f"EdgeDNS: Add record API invocation resulted in a http request session error: {e}"
                 )
         else:
             # Recordset already exists
@@ -418,7 +417,7 @@ class _EdgeDNSClient(object):
                     return
             txt_recordset["rdata"].append(record_content)
             putpathsegment = self.EDGEDNSZONESURL + '{0}/names/{1}/types/TXT'.format(zone, txt_recordset["name"])
-            logger.debug('EdgeDNS: Recordset Add PUT URL: {0}'.format(putpathsegment))
+            logger.debug(f"EdgeDNS: Recordset Add PUT URL: {putpathsegment}")
 
             try:
                 recordset_json = json.dumps(txt_recordset)
@@ -426,11 +425,12 @@ class _EdgeDNSClient(object):
             except:
                 e = sys.exc_info()[0]
                 raise errors.PluginError(
-                    "EdgeDNS: API invocation resulted in a session error: {0}".format(e)
+                    f"EdgeDNS: API invocation resulted in a session error: {e}"
                 )
 
         if not result.status_code == 200 and not result.status_code == 201:
-            raise errors.PluginError('EdgeDNS: Add TXT recordset thru EdgeDNS API failed: ({0} {1})'.format(result.status_code, result.reason)
+            raise errors.PluginError(
+                f"EdgeDNS: Add TXT recordset thru EdgeDNS API failed: ({result.status_code} {result.reason})"
             )
 
         return
@@ -450,25 +450,25 @@ class _EdgeDNSClient(object):
         txt_recordset["rdata"].pop(text_index)
         if len(txt_recordset["rdata"]) > 0:
             # Update
-            logger.debug('EdgeDNS: Recordset Delete PUT URL: {0}'.format(putpathsegment))
+            logger.debug(f"EdgeDNS: Recordset Delete PUT URL: {putpathsegment}")
             try:
                 recordset_json = json.dumps(txt_recordset)
                 result = session.put(putpathsegment, data=recordset_json)
             except:
                 e = sys.exc_info()[0]
-                logger.warning("EdgeDNS: API Delete recordset invocation resulted in a session error: {0}. Ignoring".format(e))
+                logger.warning(f"EdgeDNS: API Delete recordset invocation resulted in a session error: {e}. Ignoring")
                 return
 
             if not result.status_code == 200:
-                logger.error("EdgeDNS: API Update recordset invocation resulted in an  error: {0} {1}. Ignoring".format(result.status_code, result.reason))
+                logger.error(f"EdgeDNS: API Update recordset invocation resulted in an error: {result.status_code} {result.reason}. Ignoring")
         else:
             # Delete
-            logger.debug('EdgeDNS: Recordset Delete DELETE URL: {0}'.format(putpathsegment))
+            logger.debug(f"EdgeDNS: Recordset Delete DELETE URL: {putpathsegment}")
             try:
                 result = session.delete(putpathsegment)
             except:
                 e = sys.exc_info()[0]
-                logger.warning("EdgeDNS: API Delete recordset invocation resulted in a session error: {0}. Ignoring".format(e))
+                logger.warning(f"EdgeDNS: API Delete recordset invocation resulted in a session error: {e}. Ignoring")
 
         return
 

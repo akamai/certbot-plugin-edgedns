@@ -4,7 +4,7 @@ completing a ``dns-01`` challenge (`~acme.challenges.DNS01`) by creating, and
 subsequently removing, TXT records using the Akamai Edge DNS REST API.
 
 .. note::
-   **Python 3.10 or higher is required** due to dependency requirements.
+   **Python 3.12 or higher is required** due to dependency requirements.
 
 Named Arguments
 ---------------

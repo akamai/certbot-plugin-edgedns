@@ -13,6 +13,8 @@ from certbot.errors import PluginError
 from certbot.plugins import dns_test_common
 from certbot.plugins.dns_test_common import DOMAIN
 from certbot.tests import util as test_util
+import certbot_plugin_edgedns
+print(certbot_plugin_edgedns.__file__)
 
 FAKE_ACCESS_TOKEN = "akab-1234567890qwerty-asdfghjklzxcvtnu"
 FAKE_CLIENT_TOKEN = "akab-mnbvcxzlkjhgfdsapoiuytrewq1234567"
@@ -89,11 +91,9 @@ class AuthenticatorTest(
         # UPDATED/ADDED: Complete achall mock
         self.achall = mock.MagicMock()
         self.achall.domain = DOMAIN
-        self.achall.account_key = mock.MagicMock()
-        self.achall.validation = mock.MagicMock(return_value="fake-validation")
-        self.achall.validation_domain_name = mock.MagicMock(
-            return_value="_acme-challenge." + DOMAIN
-        )
+        self.achall.identifier.value = DOMAIN
+        self.achall.validation.return_value = "fake-validation"
+        self.achall.validation_domain_name.return_value = "_acme-challenge." + DOMAIN
 
     def tearDown(self):
         self.notify_patcher.stop()

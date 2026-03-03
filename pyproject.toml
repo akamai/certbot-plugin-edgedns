@@ -1,3 +1,61 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "certbot-plugin-edgedns"
+version = "0.2.0"
+description = "Akamai Edge DNS Authenticator plugin for Certbot"
+readme = "README.rst"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE.txt"]
+authors = [
+    {name = "Ed Lynes [Akamai Technologies, Inc]", email = "elynes@akamai.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Plugins",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Security",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+keywords = ["certbot", "edgedns"]
+dependencies = [
+    "acme>=5.2.2",
+    "certbot>=5.2.2",
+    "requests",
+    "urllib3",
+    "edgegrid-python>=2.0.5",
+    "zope.interface",
+]
+
+[project.urls]
+Homepage = "https://github.com/akamai/certbot-plugin-edgedns"
+
+[project.optional-dependencies]
+docs = [
+    "Sphinx>=9.1.0",
+    "sphinx_rtd_theme>=3.1.0",
+]
+test = [
+    "requests_mock",
+    "mock",
+]
+
+[project.entry-points."certbot.plugins"]
+edgedns = "certbot_plugin_edgedns.edgedns:Authenticator"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
