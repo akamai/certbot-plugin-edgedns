@@ -18,3 +18,8 @@ certbot_plugin_edgedns.egg-info/
 /myenv
 /dist
 __pycache__/
+.vscode
+.pytest_cache
+test_env/
+*_venv
+.coverage

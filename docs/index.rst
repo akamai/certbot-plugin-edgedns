@@ -8,21 +8,10 @@ Welcome to certbot-plugin-edgedns' documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: User Guide
+
+   self
+   api
 
 .. automodule:: certbot_plugin_edgedns
    :members:
-
-.. toctree::
-   :maxdepth: 1
-
-   api
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
