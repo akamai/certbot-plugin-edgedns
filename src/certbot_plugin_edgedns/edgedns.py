@@ -1,5 +1,4 @@
 """DNS Authenticator for Akamai EdgeDNS."""
-import copy
 import json
 import logging
 import requests
@@ -18,10 +17,10 @@ from certbot.plugins import dns_common
 
 logger = logging.getLogger(__name__)
 
-EDGEGRID_URL = 'https://developer.akamai.com/api/getting-started'
-EDGEGRID_CREDS = {"client_token": "",
-                  "access_token": "",
-                  "client_secret": "",
+EDGEGRID_URL = 'https://techdocs.akamai.com/developer/docs/developer-center'
+EDGEGRID_CREDS = {"client_token": "",  # nosec B105
+                  "access_token": "",  # nosec B105
+                  "client_secret": "",  # nosec B105
                   "host": "",
                   "edgerc_path": "",
                   "edgerc_section": "",
@@ -460,7 +459,10 @@ class _EdgeDNSClient:
                 return
 
             if not result.status_code == 200:
-                logger.error(f"EdgeDNS: API Update recordset invocation resulted in an error: {result.status_code} {result.reason}. Ignoring")
+                logger.error(
+                    "EdgeDNS: API Update recordset invocation resulted in an error: %s %s. Ignoring",
+                    result.status_code, result.reason
+                )
         else:
             # Delete
             logger.debug(f"EdgeDNS: Recordset Delete DELETE URL: {putpathsegment}")
