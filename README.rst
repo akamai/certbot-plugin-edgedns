@@ -1,7 +1,7 @@
 certbot-plugin-edgedns
 ======================
 
-Akamai `Edge DNS <https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html>`_ Authenticator plugin for Certbot.
+Akamai `Edge DNS <https://techdocs.akamai.com/edge-dns/docs/welcome-edge-dns>`_ Authenticator plugin for Certbot.
 
 This plugin automates the process of completing a ``dns-01`` challenge by creating, and subsequently removing, TXT records 
 using the Akamai Edge DNS.
@@ -9,16 +9,16 @@ using the Akamai Edge DNS.
 Configuration of EdgeDNS
 ------------------------
 
-The Akamai Edge DNS certbot plugin utilizes the Akamai `OPEN Edge DNS API <https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html>`_. To facilitate access, the plugin uses the standard Akamai OPEN credentials file, .edgerc. 
-By default, This file is typically located in your HOME directory.
+The Akamai Edge DNS certbot plugin utilizes the Akamai `OPEN Edge DNS API <https://techdocs.akamai.com/edge-dns/reference/edge-dns-api>`_. To facilitate access, the plugin uses the standard Akamai OPEN credentials file, .edgerc.
+By default, this file is typically located in your HOME directory.
 
 The Akamai OPEN credentials file location, and the section, must be specified in the certbot credentials file described in the
-following sections. Alternatively, The individual Akamai OPEN credential keys and values can be specified in the certbot 
+following sections. Alternatively, the individual Akamai OPEN credential keys and values can be specified in the certbot 
 credentials file as described in the following sections.
 
-To set up your Akamai OPEN CREDENTIALS, and .edgerc file, see the `authorization <https://developer.akamai.com/legacy/introduction/Prov_Creds.html>`_ and `credentials <https://developer.akamai.com/legacy/introduction/Conf_Client.html>`_ sections of the Akamai Developer Get Started guide.
+To set up your Akamai OPEN CREDENTIALS, and .edgerc file, see the `authentication credentials <https://techdocs.akamai.com/developer/docs/edgegrid>`_ section of the Akamai Developer documentation.
 
-.. _EdgeDNS: https://learn.akamai.com/en-us/products/cloud_security/edge_dns.html
+.. _EdgeDNS: https://techdocs.akamai.com/edge-dns/docs/welcome-edge-dns
 .. _certbot: https://certbot.eff.org/
 
 Installation

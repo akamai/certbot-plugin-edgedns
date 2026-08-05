@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77.0.0", "wheel"]
+requires = ["setuptools>=83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "certbot-plugin-edgedns"
-version = "0.2.0"
+version = "0.3.0"
 description = "Akamai Edge DNS Authenticator plugin for Certbot"
 readme = "README.rst"
 requires-python = ">=3.12"
@@ -28,12 +28,12 @@ classifiers = [
 ]
 keywords = ["certbot", "edgedns"]
 dependencies = [
-    "acme>=5.2.2",
-    "certbot>=5.2.2",
-    "requests",
-    "urllib3",
-    "edgegrid-python>=2.0.5",
-    "zope.interface",
+    "acme>=5.7.0",
+    "certbot>=5.7.0",
+    "requests>=2.34.2",
+    "urllib3>=2.7.0",
+    "edgegrid-python>=2.0.7",
+    "zope.interface>=8.5",
 ]
 
 [project.urls]
@@ -45,8 +45,8 @@ docs = [
     "sphinx_rtd_theme>=3.1.0",
 ]
 test = [
-    "requests_mock",
-    "mock",
+    "requests_mock>=1.12.1",
+    "mock>=5.2.0",
 ]
 
 [project.entry-points."certbot.plugins"]

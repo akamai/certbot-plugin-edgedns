@@ -147,6 +147,52 @@ class AuthenticatorTest(
         self.assertEqual(expected, self.mock_client_edgerc.mock_calls)
 
 
+    def test_validate_credentials_missing_client_token(self):
+        from certbot_plugin_edgedns.edgedns import Authenticator
+        auth = Authenticator(self.config, "edgedns")
+        auth.credentials = mock.MagicMock()
+        auth.credentials.confobj.filename = "test.ini"
+        auth.credentials.confobj.get.side_effect = lambda key: {
+            'edgerc_path': None, 'edgerc_section': None,
+            'client_token': None,
+            'client_secret': FAKE_CLIENT_SECRET,
+            'access_token': FAKE_ACCESS_TOKEN,
+            'host': FAKE_HOST,
+            'account_key': None,
+        }.get(key)
+        with self.assertRaises(errors.PluginError) as ctx:
+            auth._validate_credentials()
+        self.assertIn('client_token', str(ctx.exception))
+
+    def test_validate_credentials_missing_multiple_fields(self):
+        from certbot_plugin_edgedns.edgedns import Authenticator
+        auth = Authenticator(self.config, "edgedns")
+        auth.credentials = mock.MagicMock()
+        auth.credentials.confobj.filename = "test.ini"
+        auth.credentials.confobj.get.side_effect = lambda key: {
+            'edgerc_path': None, 'edgerc_section': None,
+            'client_token': FAKE_CLIENT_TOKEN,
+            'client_secret': FAKE_CLIENT_SECRET,
+            'access_token': None,
+            'host': None,
+            'account_key': None,
+        }.get(key)
+        with self.assertRaises(errors.PluginError) as ctx:
+            auth._validate_credentials()
+        self.assertIn('access_token', str(ctx.exception))
+        self.assertIn('host', str(ctx.exception))
+
+    def test_validate_credentials_no_credentials(self):
+        from certbot_plugin_edgedns.edgedns import Authenticator
+        auth = Authenticator(self.config, "edgedns")
+        auth.credentials = mock.MagicMock()
+        auth.credentials.confobj.filename = "test.ini"
+        auth.credentials.confobj.get.side_effect = lambda key: None
+        with self.assertRaises(errors.PluginError) as ctx:
+            auth._validate_credentials()
+        self.assertIn('edgerc_path', str(ctx.exception))
+
+
 class EdgeDNSClientTest(unittest.TestCase):
 
     FAKE_ENDPOINT = "https://" + FAKE_HOST + "/config-dns/v2"
@@ -179,17 +225,23 @@ class EdgeDNSClientTest(unittest.TestCase):
 
     def setUp(self):
         from certbot_plugin_edgedns.edgedns import _EdgeDNSClient
+        import certbot_plugin_edgedns.edgedns as edgedns_module
 
         self.session = requests.Session()
         self.adapter = requests_mock.Adapter()
         self.session.mount('https://', self.adapter)
-        
-        EDGEGRID_CREDS = {"client_token": FAKE_CLIENT_TOKEN,
-                          "client_secret": FAKE_CLIENT_SECRET,
-                          "access_token": FAKE_ACCESS_TOKEN,
-                          "host": FAKE_HOST}
 
-        self.client = _EdgeDNSClient(EDGEGRID_CREDS)
+        edgedns_module.EDGEGRID_CREDS.update({
+            "client_token": FAKE_CLIENT_TOKEN,
+            "client_secret": FAKE_CLIENT_SECRET,
+            "access_token": FAKE_ACCESS_TOKEN,
+            "host": FAKE_HOST,
+            "edgerc_path": "",
+            "edgerc_section": "",
+            "account_key": "",
+        })
+
+        self.client = _EdgeDNSClient(edgedns_module.EDGEGRID_CREDS)
         self.notify_patcher = mock.patch('certbot.display.util.notify', lambda *args, **kwargs: None)
         self.notify_patcher.start()
 
@@ -354,6 +406,144 @@ class EdgeDNSClientTest(unittest.TestCase):
 
         with self.assertRaises(errors.PluginError) as context:
             self.client.del_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_ADDTL_CONTENT)
+
+    def test_add_txt_record_duplicate(self):
+        print("*** test_add_txt_record_duplicate ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, response=json.dumps(self.TXT_GET_RECSET_RESP), status_code=200)
+
+        # RECORD_CONTENT already in rdata — should return without calling PUT
+        self.client.add_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_CONTENT, self.RECORD_TTL)
+
+    def test_del_txt_record_empty_rdata(self):
+        print("*** test_del_txt_record_empty_rdata ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        empty_recordset = copy.deepcopy(self.TXT_GET_RECSET_RESP)
+        empty_recordset["rdata"] = []
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, response=json.dumps(empty_recordset), status_code=200)
+
+        # Empty rdata — should return early without DELETE/PUT
+        self.client.del_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_CONTENT)
+
+    def test_del_txt_record_content_not_in_rdata(self):
+        print("*** test_del_txt_record_content_not_in_rdata ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, response=json.dumps(self.TXT_GET_RECSET_RESP), status_code=200)
+
+        # Content not present in rdata — should be a no-op
+        self.client.del_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], "nonexistent_content")
+
+    def test_add_txt_record_post_failure(self):
+        print("*** test_add_txt_record_post_failure ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, message="Not Found", status_code=404)
+        self._register_response('POST', recordset_get_url, message="Internal Server Error", status_code=500)
+
+        with self.assertRaises(errors.PluginError):
+            self.client.add_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_CONTENT, self.RECORD_TTL)
+
+    def test_add_txt_record_put_failure(self):
+        print("*** test_add_txt_record_put_failure ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, response=json.dumps(self.TXT_GET_RECSET_RESP), status_code=200)
+        self._register_response('PUT', recordset_get_url, message="Internal Server Error", status_code=500)
+
+        with self.assertRaises(errors.PluginError):
+            self.client.add_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_ADDTL_CONTENT, self.RECORD_TTL)
+
+    def test_get_text_record_server_error(self):
+        print("*** test_get_text_record_server_error ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, message="Internal Server Error", status_code=500)
+
+        with self.assertRaises(errors.PluginError):
+            self.client.get_text_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+
+    def test_del_txt_record_update_failure_silenced(self):
+        print("*** test_del_txt_record_update_failure_silenced ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        multi_recordset = copy.deepcopy(self.TXT_GET_RECSET_RESP)
+        multi_recordset["rdata"].append(self.RECORD_ADDTL_CONTENT)
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"])
+        self._register_response('GET', recordset_get_url, response=json.dumps(multi_recordset), status_code=200)
+
+        # PUT fails — delete errors are logged but never raised
+        self._register_response('PUT', recordset_get_url, message="Internal Server Error", status_code=500)
+
+        self.client.del_txt_record(self.TEST_ZONE, self.TXT_GET_RECSET_RESP["name"], self.RECORD_CONTENT)
+
+    def test_find_managed_zone_subdomain_fallback(self):
+        print("*** test_find_managed_zone_subdomain_fallback ***")
+        self.adapter.reset()
+        self.client.set_session(self.session)
+
+        subdomain = "sub." + self.TEST_ZONE
+
+        # Subdomain zone not found
+        subdomain_zone_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, subdomain)
+        self._register_response('GET', subdomain_zone_url, message="Not Found", status_code=404)
+
+        # Parent zone found
+        zone_get_url = "{0}/zones/{1}".format(self.FAKE_ENDPOINT, self.TEST_ZONE)
+        self._register_response('GET', zone_get_url, response=json.dumps(self.GET_ZONE_RESP), status_code=200)
+
+        # Recordset GET → 404 (new record), then POST → 201
+        record_name = self.TXT_GET_RECSET_RESP["name"]
+        recordset_get_url = "{0}/zones/{1}/names/{2}/types/TXT".format(
+            self.FAKE_ENDPOINT, self.TEST_ZONE, record_name)
+        self._register_response('GET', recordset_get_url, message="Not Found", status_code=404)
+        self._register_response('POST', recordset_get_url, response=json.dumps(self.TXT_GET_RECSET_RESP), status_code=201)
+
+        self.client.add_txt_record(subdomain, record_name, self.RECORD_CONTENT, self.RECORD_TTL)
+
 
 if __name__ == "__main__":
     unittest.main()  # pragma: no cover
